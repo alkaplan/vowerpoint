@@ -90,7 +90,7 @@ export function PresentationMode() {
           break;
         case 'l':
         case 'L':
-          setLaserActive(!laserActive);
+          setLaserActive(prev => !prev);
           break;
       }
     };
@@ -107,8 +107,14 @@ export function PresentationMode() {
     setShowControls(e.clientY > window.innerHeight - 80);
   }, [laserActive]);
 
+  // Exit presentation if no valid slide (moved to useEffect to avoid render-time state update)
+  useEffect(() => {
+    if (!currentSlide) {
+      store.exitPresentation();
+    }
+  }, [currentSlide, store]);
+
   if (!currentSlide) {
-    store.exitPresentation();
     return null;
   }
 

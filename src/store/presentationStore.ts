@@ -383,8 +383,8 @@ export const usePresentationStore = create<StoreState>()(
       }),
       bringToFront: (elementId) => set((state) => {
         const slide = state.presentation.slides[state.currentSlideIndex];
-        if (!slide) return state;
-        const maxZ = Math.max(...slide.elements.map(e => e.zIndex));
+        if (!slide || slide.elements.length === 0) return state;
+        const maxZ = slide.elements.reduce((max, e) => Math.max(max, e.zIndex), 0);
         const slides = state.presentation.slides.map((s, i) => {
           if (i !== state.currentSlideIndex) return s;
           return {
@@ -401,8 +401,8 @@ export const usePresentationStore = create<StoreState>()(
       }),
       sendToBack: (elementId) => set((state) => {
         const slide = state.presentation.slides[state.currentSlideIndex];
-        if (!slide) return state;
-        const minZ = Math.min(...slide.elements.map(e => e.zIndex));
+        if (!slide || slide.elements.length === 0) return state;
+        const minZ = slide.elements.reduce((min, e) => Math.min(min, e.zIndex), Infinity);
         const slides = state.presentation.slides.map((s, i) => {
           if (i !== state.currentSlideIndex) return s;
           return {

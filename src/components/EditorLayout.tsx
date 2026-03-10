@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useCallback } from 'react';
+import React from 'react';
 import { usePresentationStore } from '@/store/presentationStore';
 import { TitleBar } from './TitleBar';
 import { MenuBar } from './MenuBar';
@@ -11,6 +11,7 @@ import { FormatPanel } from './FormatPanel';
 import { SpeakerNotes } from './SpeakerNotes';
 import { PresentationMode } from './PresentationMode';
 import { KeyboardShortcuts } from './KeyboardShortcuts';
+import { useAutoSave } from '@/hooks/useAutoSave';
 
 export function EditorLayout() {
   const {
@@ -18,6 +19,9 @@ export function EditorLayout() {
     showRightPanel,
     isPresentationMode,
   } = usePresentationStore();
+
+  // Enable auto-save (localStorage + Supabase when configured)
+  useAutoSave();
 
   if (isPresentationMode) {
     return <PresentationMode />;

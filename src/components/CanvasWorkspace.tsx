@@ -240,9 +240,9 @@ function ElementRenderer({
       let newY = resizeStart.current.elY;
 
       if (handle.includes('e')) newW = Math.max(20, resizeStart.current.w + dx);
-      if (handle.includes('w')) { newW = Math.max(20, resizeStart.current.w - dx); newX = resizeStart.current.elX + dx; }
+      if (handle.includes('w')) { newW = Math.max(20, resizeStart.current.w - dx); newX = resizeStart.current.elX + (resizeStart.current.w - newW); }
       if (handle.includes('s')) newH = Math.max(20, resizeStart.current.h + dy);
-      if (handle.includes('n')) { newH = Math.max(20, resizeStart.current.h - dy); newY = resizeStart.current.elY + dy; }
+      if (handle.includes('n')) { newH = Math.max(20, resizeStart.current.h - dy); newY = resizeStart.current.elY + (resizeStart.current.h - newH); }
 
       if (maintainAspect) {
         if (handle === 'e' || handle === 'w') newH = newW / aspect;
@@ -529,10 +529,10 @@ function ElementRenderer({
             stroke={element.style.stroke || '#000000'}
             strokeWidth={element.style.strokeWidth || 2}
             strokeDasharray={element.style.strokeDasharray || 'none'}
-            markerEnd={element.style.arrowEnd ? 'url(#arrowhead)' : undefined}
+            markerEnd={element.style.arrowEnd ? `url(#arrowhead-${element.id})` : undefined}
           />
           <defs>
-            <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+            <marker id={`arrowhead-${element.id}`} markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
               <polygon points="0 0, 10 3.5, 0 7" fill={element.style.stroke || '#000000'} />
             </marker>
           </defs>
@@ -724,9 +724,14 @@ export function CanvasWorkspace() {
         let w = Math.abs(curX - drawStart.current.x);
         let h = Math.abs(curY - drawStart.current.y);
 
-        // Minimum size defaults
-        if (w < 20) w = tool === 'text' ? 200 : tool === 'table' ? 300 : 100;
-        if (h < 20) h = tool === 'text' ? 40 : tool === 'table' ? 150 : 100;
+        // Minimum size defaults (lines need different handling)
+        if (tool === 'line') {
+          if (w < 20) w = 200;
+          if (h < 4) h = 4;
+        } else {
+          if (w < 20) w = tool === 'text' ? 200 : tool === 'table' ? 300 : 100;
+          if (h < 20) h = tool === 'text' ? 40 : tool === 'table' ? 150 : 100;
+        }
 
         if (tool === 'text') {
           store.addElement({
@@ -754,9 +759,9 @@ export function CanvasWorkspace() {
         } else if (tool === 'line') {
           store.addElement({
             id: uuidv4(), type: 'line',
-            x, y, width: w || 200, height: h || 4,
+            x, y, width: w, height: h,
             rotation: 0, zIndex: 1, locked: false, opacity: 1, visible: true,
-            content: { points: [[0, (h || 4) / 2], [w || 200, (h || 4) / 2]] },
+            content: { points: [[0, h / 2], [w, h / 2]] },
             style: { stroke: '#000000', strokeWidth: 2 },
           });
         } else if (tool === 'table') {

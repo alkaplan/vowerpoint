@@ -227,7 +227,7 @@ export function KeyboardShortcuts() {
           store.startPresentation(0);
           return;
         case 'Tab':
-          if (store.selectedElementIds.length >= 0) {
+          if (store.selectedElementIds.length > 0) {
             e.preventDefault();
             const currentSlide = store.getCurrentSlide();
             if (!currentSlide || currentSlide.elements.length === 0) return;
