@@ -6,6 +6,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { SlideElement } from '@/types/presentation';
 import { getShapeDefinition } from '@/lib/shapes';
 import { Trash2, Copy, Clipboard, Lock, Unlock, ArrowUp, ArrowDown, ChevronsUp, ChevronsDown } from 'lucide-react';
+import DOMPurify from 'dompurify';
 
 // ========== Context Menu ==========
 function ContextMenu({ x, y, elementId, onClose }: { x: number; y: number; elementId: string; onClose: () => void }) {
@@ -325,7 +326,7 @@ function ElementRenderer({
     // Save content on blur
     if (textRef.current) {
       const text = textRef.current.innerText;
-      const html = textRef.current.innerHTML;
+      const html = DOMPurify.sanitize(textRef.current.innerHTML);
       store.updateElement(element.id, {
         content: { ...element.content, text, html },
       });

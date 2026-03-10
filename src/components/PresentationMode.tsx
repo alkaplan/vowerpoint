@@ -31,6 +31,7 @@ export function PresentationMode() {
   }, []);
 
   const goNext = useCallback(() => {
+    if (transitioning) return;
     if (store.presentationSlideIndex < totalSlides - 1) {
       const transition = currentSlide?.transition?.type || 'none';
       if (transition !== 'none') {
@@ -44,9 +45,10 @@ export function PresentationMode() {
         store.nextPresentationSlide();
       }
     }
-  }, [store, totalSlides, currentSlide]);
+  }, [store, totalSlides, currentSlide, transitioning]);
 
   const goPrev = useCallback(() => {
+    if (transitioning) return;
     if (store.presentationSlideIndex > 0) {
       const transition = currentSlide?.transition?.type || 'none';
       if (transition !== 'none') {
@@ -60,7 +62,7 @@ export function PresentationMode() {
         store.prevPresentationSlide();
       }
     }
-  }, [store, currentSlide]);
+  }, [store, currentSlide, transitioning]);
 
   // Keyboard navigation
   useEffect(() => {
