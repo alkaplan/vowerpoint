@@ -197,11 +197,15 @@ function ElementRenderer({
       onSelect(element.id, e.shiftKey);
       return;
     }
-    onSelect(element.id, e.shiftKey);
+    // Don't call onSelect during text editing — it triggers store updates
+    // that can cause re-renders and reset the contentEditable cursor
     if (editingText) return;
+    onSelect(element.id, e.shiftKey);
 
     setIsDragging(true);
     onDragStart?.(element.id);
+    const DRAG_THRESHOLD = 3; // pixels before actual drag starts
+    let hasDragged = false;
     dragStart.current = {
       x: e.clientX, y: e.clientY,
       elX: element.x, elY: element.y,
@@ -210,6 +214,9 @@ function ElementRenderer({
     const handleMove = (ev: MouseEvent) => {
       const dx = (ev.clientX - dragStart.current.x) / scale;
       const dy = (ev.clientY - dragStart.current.y) / scale;
+      // Only start moving after exceeding threshold (prevents accidental drag during double-click)
+      if (!hasDragged && Math.abs(dx * scale) < DRAG_THRESHOLD && Math.abs(dy * scale) < DRAG_THRESHOLD) return;
+      hasDragged = true;
       store.updateElement(element.id, {
         x: dragStart.current.elX + dx,
         y: dragStart.current.elY + dy,
@@ -293,12 +300,10 @@ function ElementRenderer({
     document.addEventListener('mouseup', handleUp);
   }, [element, store]);
 
-  const handleDoubleClick = useCallback((e: React.MouseEvent) => {
-    e.stopPropagation();
+  const enterTextEditing = useCallback(() => {
     if (element.type === 'text' || element.shapeType) {
       setEditingText(true);
       store.setIsTextEditing(true);
-      onDoubleClick(element.id);
       // Auto-focus the text content
       setTimeout(() => {
         if (textRef.current) {
@@ -313,7 +318,13 @@ function ElementRenderer({
         }
       }, 10);
     }
-  }, [element, onDoubleClick, store]);
+  }, [element.type, element.shapeType, store]);
+
+  const handleDoubleClick = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation();
+    enterTextEditing();
+    onDoubleClick(element.id);
+  }, [element.id, onDoubleClick, enterTextEditing]);
 
   const handleContextMenu = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
