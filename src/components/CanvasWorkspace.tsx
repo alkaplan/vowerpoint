@@ -316,17 +316,23 @@ function ElementRenderer({
   }, [element.id, onSelect]);
 
   const handleTextBlur = useCallback(() => {
+    // Save content on blur
+    if (textRef.current) {
+      const text = textRef.current.innerText;
+      const html = textRef.current.innerHTML;
+      store.updateElement(element.id, {
+        content: { ...element.content, text, html },
+      });
+    }
     setEditingText(false);
     store.setIsTextEditing(false);
-  }, [store]);
+  }, [store, element.id, element.content]);
 
-  const handleTextInput = useCallback((e: React.FormEvent<HTMLDivElement>) => {
-    const text = (e.target as HTMLDivElement).innerText;
-    const html = (e.target as HTMLDivElement).innerHTML;
-    store.updateElement(element.id, {
-      content: { ...element.content, text, html },
-    });
-  }, [element, store]);
+  const handleTextInput = useCallback(() => {
+    // Don't update store on every keystroke - this causes re-render
+    // which resets cursor position via dangerouslySetInnerHTML.
+    // Content is saved on blur instead.
+  }, []);
 
   const containerStyle: React.CSSProperties = {
     position: 'absolute',
@@ -407,17 +413,22 @@ function ElementRenderer({
       };
 
       if (editingText) {
+        // Use a wrapper div for flex alignment, keep contentEditable as a block child
+        // to avoid cursor issues with display:flex on contentEditable
+        const { display, alignItems, ...editableStyle } = textStyle;
         return (
-          <div
-            ref={textRef}
-            contentEditable
-            suppressContentEditableWarning
-            style={textStyle}
-            onInput={handleTextInput}
-            onBlur={handleTextBlur}
-            dangerouslySetInnerHTML={{ __html: textContent?.html || textContent?.text || '' }}
-            className="cursor-text"
-          />
+          <div style={{ display, alignItems, width: '100%', height: '100%' }}>
+            <div
+              ref={textRef}
+              contentEditable
+              suppressContentEditableWarning
+              style={{ ...editableStyle, width: '100%', outline: 'none' }}
+              onInput={handleTextInput}
+              onBlur={handleTextBlur}
+              dangerouslySetInnerHTML={{ __html: textContent?.html || textContent?.text || '' }}
+              className="cursor-text"
+            />
+          </div>
         );
       }
 
