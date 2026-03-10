@@ -478,7 +478,7 @@ function ElementRenderer({
             />
           )}
           {/* Text inside shape */}
-          {textContent?.text && (
+          {(textContent?.text || editingText) && (
             <div
               style={{
                 position: 'absolute',
@@ -496,6 +496,7 @@ function ElementRenderer({
             >
               {editingText ? (
                 <div
+                  ref={textRef}
                   contentEditable
                   suppressContentEditableWarning
                   onInput={handleTextInput}
