@@ -132,7 +132,7 @@ export const usePresentationStore = create<StoreState>()(
       recentColors: [] as string[],
 
       // Presentation actions
-      setPresentation: (p) => set({ presentation: p, currentSlideIndex: 0, selectedElementIds: [] }),
+      setPresentation: (p) => set({ presentation: p, currentSlideIndex: 0, selectedElementIds: [], saveStatus: 'unsaved' }),
       setTitle: (title) => set((state) => ({
         presentation: { ...state.presentation, title, updatedAt: new Date().toISOString() },
         saveStatus: 'unsaved',

@@ -383,11 +383,12 @@ function ElementRenderer({
       >
         <div className="w-3 h-3 rounded-full border-2 border-gs-blue bg-white" />
       </div>
-      {/* Lock indicator */}
-      {element.locked && (
-        <div className="absolute -top-5 -right-1 text-xs text-gs-text-secondary">🔒</div>
-      )}
     </>
+  ) : null;
+
+  // Lock indicator (rendered separately so it shows when element IS locked)
+  const lockIndicator = isSelected && element.locked ? (
+    <div className="absolute -top-5 -right-1 text-xs text-gs-text-secondary" style={{ zIndex: 10 }}>🔒</div>
   ) : null;
 
   // Render element content based on type
@@ -618,6 +619,7 @@ function ElementRenderer({
       >
         {renderContent()}
         {handles}
+        {lockIndicator}
       </div>
       {contextMenu && (
         <ContextMenu

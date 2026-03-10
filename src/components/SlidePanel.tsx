@@ -68,7 +68,7 @@ function SlideThumbnail({ slide, index, isActive }: {
       const btn = document.createElement('button');
       btn.className = 'menu-item w-full text-left';
       btn.textContent = item.label;
-      btn.onclick = () => { item.action(); document.body.removeChild(menu); };
+      btn.onclick = () => { item.action(); if (document.body.contains(menu)) document.body.removeChild(menu); document.removeEventListener('mousedown', closeMenu); };
       menu.appendChild(btn);
     });
 
