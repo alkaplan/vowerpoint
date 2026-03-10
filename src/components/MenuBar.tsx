@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { usePresentationStore } from '@/store/presentationStore';
+import { usePresentationStore, createNewPresentation } from '@/store/presentationStore';
 import { exportToJSON, importFromJSON, exportToPNG, exportToPDF } from '@/lib/export';
 
 interface MenuItem {
@@ -75,7 +75,7 @@ export function MenuBar() {
 
   const menus: Record<string, MenuItem[]> = {
     File: [
-      { label: 'New', shortcut: '', action: () => { store.setPresentation({ ...store.presentation, id: crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(), title: 'Untitled presentation', slides: [], createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() }); store.addSlide('title'); } },
+      { label: 'New', shortcut: '', action: () => { store.setPresentation(createNewPresentation()); } },
       { label: 'Open', shortcut: 'Ctrl+O', action: handleImport },
       { label: 'Make a copy', action: () => { const copy = JSON.parse(JSON.stringify(store.presentation)); copy.title = store.presentation.title + ' (copy)'; exportToJSON(copy); } },
       { label: '', separator: true },

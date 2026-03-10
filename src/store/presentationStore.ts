@@ -23,7 +23,7 @@ const createDefaultSlide = (orderIndex: number, layout: LayoutType = 'title', th
   };
 };
 
-const createDefaultPresentation = (): Presentation => {
+export const createNewPresentation = (): Presentation => {
   const theme = getDefaultTheme();
   return {
     id: uuidv4(),
@@ -112,7 +112,7 @@ export const usePresentationStore = create<StoreState>()(
   temporal(
     (set, get) => ({
       // Initial state
-      presentation: createDefaultPresentation(),
+      presentation: createNewPresentation(),
       currentSlideIndex: 0,
       selectedElementIds: [],
       activeTool: 'select' as ToolType,
@@ -132,7 +132,7 @@ export const usePresentationStore = create<StoreState>()(
       recentColors: [] as string[],
 
       // Presentation actions
-      setPresentation: (p) => set({ presentation: p }),
+      setPresentation: (p) => set({ presentation: p, currentSlideIndex: 0, selectedElementIds: [] }),
       setTitle: (title) => set((state) => ({
         presentation: { ...state.presentation, title, updatedAt: new Date().toISOString() },
         saveStatus: 'unsaved',
@@ -230,10 +230,8 @@ export const usePresentationStore = create<StoreState>()(
         };
       }),
       setSlideLayout: (slideId, layout) => set((state) => {
-        const layoutDef = getLayoutDefinition(layout);
-        const newElements = layoutDef.createElements(state.presentation.theme.fontBody);
         const slides = state.presentation.slides.map(s =>
-          s.id === slideId ? { ...s, layout, elements: newElements } : s
+          s.id === slideId ? { ...s, layout } : s
         );
         return {
           presentation: { ...state.presentation, slides, updatedAt: new Date().toISOString() },
