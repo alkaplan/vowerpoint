@@ -5,6 +5,161 @@ import { usePresentationStore } from '@/store/presentationStore';
 import { v4 as uuidv4 } from 'uuid';
 import { SlideElement, ShapeType } from '@/types/presentation';
 import { getShapeDefinition } from '@/lib/shapes';
+import { Trash2, Copy, Clipboard, Layers, Lock, Unlock, ArrowUp, ArrowDown, ChevronsUp, ChevronsDown } from 'lucide-react';
+
+// ========== Context Menu ==========
+function ContextMenu({ x, y, elementId, onClose }: { x: number; y: number; elementId: string; onClose: () => void }) {
+  const store = usePresentationStore();
+  const element = store.getCurrentSlide()?.elements.find(el => el.id === elementId);
+  if (!element) return null;
+
+  const menuItems = [
+    { label: 'Cut', icon: <Clipboard className="w-3.5 h-3.5" />, shortcut: 'Ctrl+X', action: () => { store.cutElements(); onClose(); } },
+    { label: 'Copy', icon: <Copy className="w-3.5 h-3.5" />, shortcut: 'Ctrl+C', action: () => { store.copyElements(); onClose(); } },
+    { label: 'Paste', icon: <Clipboard className="w-3.5 h-3.5" />, shortcut: 'Ctrl+V', action: () => { store.pasteElements(); onClose(); } },
+    { label: 'divider' },
+    { label: 'Duplicate', shortcut: 'Ctrl+D', action: () => { store.duplicateElements([elementId]); onClose(); } },
+    { label: 'Delete', icon: <Trash2 className="w-3.5 h-3.5" />, shortcut: 'Del', action: () => { store.deleteElements([elementId]); onClose(); } },
+    { label: 'divider' },
+    { label: 'Bring to front', icon: <ChevronsUp className="w-3.5 h-3.5" />, action: () => { store.bringToFront(elementId); onClose(); } },
+    { label: 'Bring forward', icon: <ArrowUp className="w-3.5 h-3.5" />, action: () => { store.bringForward(elementId); onClose(); } },
+    { label: 'Send backward', icon: <ArrowDown className="w-3.5 h-3.5" />, action: () => { store.sendBackward(elementId); onClose(); } },
+    { label: 'Send to back', icon: <ChevronsDown className="w-3.5 h-3.5" />, action: () => { store.sendToBack(elementId); onClose(); } },
+    { label: 'divider' },
+    { label: element.locked ? 'Unlock' : 'Lock', icon: element.locked ? <Unlock className="w-3.5 h-3.5" /> : <Lock className="w-3.5 h-3.5" />, action: () => { store.toggleLockElement(elementId); onClose(); } },
+  ];
+
+  return (
+    <>
+      <div className="fixed inset-0 z-50" onClick={onClose} onContextMenu={(e) => { e.preventDefault(); onClose(); }} />
+      <div
+        className="fixed z-50 bg-white rounded shadow-lg border border-gs-border py-1 min-w-[200px]"
+        style={{ left: x, top: y }}
+      >
+        {menuItems.map((item, i) => {
+          if (item.label === 'divider') return <div key={i} className="border-t border-gs-border my-1" />;
+          return (
+            <button
+              key={i}
+              className="w-full px-3 py-1.5 text-left text-[13px] text-gs-text hover:bg-gs-hover flex items-center gap-2"
+              onClick={item.action}
+            >
+              <span className="w-4">{item.icon || null}</span>
+              <span className="flex-1">{item.label}</span>
+              {item.shortcut && <span className="text-gs-text-secondary text-[11px]">{item.shortcut}</span>}
+            </button>
+          );
+        })}
+      </div>
+    </>
+  );
+}
+
+// ========== Smart Guides ==========
+function SmartGuides({ draggedElement, allElements }: { draggedElement: SlideElement; allElements: SlideElement[] }) {
+  const guides: { type: 'h' | 'v'; pos: number }[] = [];
+  const threshold = 5;
+  const slideW = 960;
+  const slideH = 540;
+
+  const dragCx = draggedElement.x + draggedElement.width / 2;
+  const dragCy = draggedElement.y + draggedElement.height / 2;
+
+  // Slide center guides
+  if (Math.abs(dragCx - slideW / 2) < threshold) guides.push({ type: 'v', pos: slideW / 2 });
+  if (Math.abs(dragCy - slideH / 2) < threshold) guides.push({ type: 'h', pos: slideH / 2 });
+
+  // Element alignment guides
+  allElements.forEach(el => {
+    if (el.id === draggedElement.id) return;
+    const elCx = el.x + el.width / 2;
+    const elCy = el.y + el.height / 2;
+    // Center alignment
+    if (Math.abs(dragCx - elCx) < threshold) guides.push({ type: 'v', pos: elCx });
+    if (Math.abs(dragCy - elCy) < threshold) guides.push({ type: 'h', pos: elCy });
+    // Edge alignment
+    if (Math.abs(draggedElement.x - el.x) < threshold) guides.push({ type: 'v', pos: el.x });
+    if (Math.abs(draggedElement.x + draggedElement.width - el.x - el.width) < threshold) guides.push({ type: 'v', pos: el.x + el.width });
+    if (Math.abs(draggedElement.y - el.y) < threshold) guides.push({ type: 'h', pos: el.y });
+    if (Math.abs(draggedElement.y + draggedElement.height - el.y - el.height) < threshold) guides.push({ type: 'h', pos: el.y + el.height });
+  });
+
+  if (guides.length === 0) return null;
+
+  return (
+    <>
+      {guides.map((g, i) => (
+        <div
+          key={i}
+          className="absolute pointer-events-none"
+          style={g.type === 'v'
+            ? { left: g.pos, top: 0, width: 1, height: slideH, backgroundColor: '#F44336', zIndex: 100 }
+            : { left: 0, top: g.pos, width: slideW, height: 1, backgroundColor: '#F44336', zIndex: 100 }
+          }
+        />
+      ))}
+    </>
+  );
+}
+
+// ========== Image Insert Dialog ==========
+function ImageInsertDialog({ onClose, onInsert }: { onClose: () => void; onInsert: (src: string) => void }) {
+  const [url, setUrl] = useState('');
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        if (ev.target?.result) {
+          onInsert(ev.target.result as string);
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-30">
+      <div className="bg-white rounded-lg shadow-xl p-6 w-[400px]">
+        <h3 className="text-base font-medium text-gs-text mb-4">Insert image</h3>
+        <div className="space-y-4">
+          <div>
+            <label className="text-sm text-gs-text-secondary block mb-1">Upload from computer</label>
+            <input ref={fileInputRef} type="file" accept="image/*" onChange={handleFileSelect} className="hidden" />
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              className="w-full py-2 px-3 border border-gs-border rounded text-sm text-gs-text hover:bg-gs-hover"
+            >
+              Choose file
+            </button>
+          </div>
+          <div className="border-t border-gs-border pt-3">
+            <label className="text-sm text-gs-text-secondary block mb-1">Or paste image URL</label>
+            <input
+              type="text"
+              value={url}
+              onChange={(e) => setUrl(e.target.value)}
+              placeholder="https://example.com/image.png"
+              className="w-full py-1.5 px-2 border border-gs-border rounded text-sm"
+            />
+          </div>
+        </div>
+        <div className="flex justify-end gap-2 mt-4">
+          <button onClick={onClose} className="px-4 py-1.5 text-sm text-gs-text hover:bg-gs-hover rounded">Cancel</button>
+          <button
+            onClick={() => { if (url) onInsert(url); }}
+            className="px-4 py-1.5 text-sm text-white bg-gs-blue rounded hover:opacity-90"
+            disabled={!url}
+          >
+            Insert
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 // ========== Element Renderer ==========
 function ElementRenderer({
@@ -28,6 +183,8 @@ function ElementRenderer({
   const resizeStart = useRef({ x: 0, y: 0, w: 0, h: 0, elX: 0, elY: 0 });
   const rotateStart = useRef({ angle: 0, startAngle: 0 });
   const [editingText, setEditingText] = useState(false);
+  const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
+  const textRef = useRef<HTMLDivElement>(null);
 
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
@@ -135,8 +292,28 @@ function ElementRenderer({
       setEditingText(true);
       store.setIsTextEditing(true);
       onDoubleClick(element.id);
+      // Auto-focus the text content
+      setTimeout(() => {
+        if (textRef.current) {
+          textRef.current.focus();
+          // Place cursor at end
+          const range = document.createRange();
+          range.selectNodeContents(textRef.current);
+          range.collapse(false);
+          const sel = window.getSelection();
+          sel?.removeAllRanges();
+          sel?.addRange(range);
+        }
+      }, 10);
     }
   }, [element, onDoubleClick, store]);
+
+  const handleContextMenu = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    onSelect(element.id, false);
+    setContextMenu({ x: e.clientX, y: e.clientY });
+  }, [element.id, onSelect]);
 
   const handleTextBlur = useCallback(() => {
     setEditingText(false);
@@ -232,6 +409,7 @@ function ElementRenderer({
       if (editingText) {
         return (
           <div
+            ref={textRef}
             contentEditable
             suppressContentEditableWarning
             style={textStyle}
@@ -411,16 +589,27 @@ function ElementRenderer({
   };
 
   return (
-    <div
-      data-element-wrapper
-      data-element-id={element.id}
-      style={containerStyle}
-      onMouseDown={handleMouseDown}
-      onDoubleClick={handleDoubleClick}
-    >
-      {renderContent()}
-      {handles}
-    </div>
+    <>
+      <div
+        data-element-wrapper
+        data-element-id={element.id}
+        style={containerStyle}
+        onMouseDown={handleMouseDown}
+        onDoubleClick={handleDoubleClick}
+        onContextMenu={handleContextMenu}
+      >
+        {renderContent()}
+        {handles}
+      </div>
+      {contextMenu && (
+        <ContextMenu
+          x={contextMenu.x}
+          y={contextMenu.y}
+          elementId={element.id}
+          onClose={() => setContextMenu(null)}
+        />
+      )}
+    </>
   );
 }
 
@@ -433,6 +622,8 @@ export function CanvasWorkspace() {
   const drawStart = useRef({ x: 0, y: 0 });
   const [drawRect, setDrawRect] = useState<{ x: number; y: number; w: number; h: number } | null>(null);
   const [marquee, setMarquee] = useState<{ x: number; y: number; w: number; h: number } | null>(null);
+  const [showImageDialog, setShowImageDialog] = useState(false);
+  const [draggedElementId, setDraggedElementId] = useState<string | null>(null);
 
   const scale = store.zoom / 100;
   const slideW = 960;
@@ -479,13 +670,20 @@ export function CanvasWorkspace() {
       };
       const handleUp = (ev: MouseEvent) => {
         setIsDrawing(false);
-        if (marquee) {
+        // Calculate final marquee from mouse positions directly
+        const finalX = (ev.clientX - rect.left) / scale;
+        const finalY = (ev.clientY - rect.top) / scale;
+        const mx = Math.min(startX, finalX);
+        const my = Math.min(startY, finalY);
+        const mw = Math.abs(finalX - startX);
+        const mh = Math.abs(finalY - startY);
+        if (mw > 5 || mh > 5) {
           // Select elements within marquee
           const currentSlide = store.getCurrentSlide();
           if (currentSlide) {
             const selected = currentSlide.elements.filter(el => {
-              return el.x < (marquee.x + marquee.w) && (el.x + el.width) > marquee.x &&
-                     el.y < (marquee.y + marquee.h) && (el.y + el.height) > marquee.y;
+              return el.x < (mx + mw) && (el.x + el.width) > mx &&
+                     el.y < (my + mh) && (el.y + el.height) > my;
             });
             store.setSelectedElementIds(selected.map(el => el.id));
           }
@@ -579,7 +777,7 @@ export function CanvasWorkspace() {
       document.addEventListener('mouseup', handleUp);
       return;
     }
-  }, [store, scale, getSlideCoords, marquee]);
+  }, [store, scale, getSlideCoords]);
 
   const handleElementSelect = useCallback((id: string, additive: boolean) => {
     if (store.activeTool === 'formatPainter') {
@@ -600,6 +798,25 @@ export function CanvasWorkspace() {
     // Enter text editing mode - handled in ElementRenderer
   }, []);
 
+  const handleImageInsert = useCallback((src: string) => {
+    store.addElement({
+      id: uuidv4(), type: 'image',
+      x: 200, y: 100, width: 400, height: 300,
+      rotation: 0, zIndex: 1, locked: false, opacity: 1, visible: true,
+      content: { src },
+      style: {},
+    });
+    setShowImageDialog(false);
+  }, [store]);
+
+  // Listen for image tool activation
+  useEffect(() => {
+    if (store.activeTool === 'image') {
+      setShowImageDialog(true);
+      store.setActiveTool('select');
+    }
+  }, [store, store.activeTool]);
+
   if (!slide) return <div className="flex-1 bg-gs-bg" />;
 
   const bgStyle: React.CSSProperties = {};
@@ -616,7 +833,7 @@ export function CanvasWorkspace() {
   const sortedElements = [...slide.elements].sort((a, b) => a.zIndex - b.zIndex);
 
   return (
-    <div ref={canvasRef} className="flex-1 bg-gs-bg overflow-auto flex items-center justify-center p-8">
+    <><div ref={canvasRef} className="flex-1 bg-gs-bg overflow-auto flex items-center justify-center p-8">
       {/* Grid pattern if enabled */}
       {store.showGrid && (
         <style>{`
@@ -674,6 +891,12 @@ export function CanvasWorkspace() {
             />
           )}
 
+          {/* Smart guides */}
+          {store.showGuides && draggedElementId && (() => {
+            const draggedEl = slide.elements.find(el => el.id === draggedElementId);
+            return draggedEl ? <SmartGuides draggedElement={draggedEl} allElements={slide.elements} /> : null;
+          })()}
+
           {/* Marquee selection */}
           {marquee && (
             <div
@@ -713,5 +936,13 @@ export function CanvasWorkspace() {
         )}
       </div>
     </div>
-  );
+
+    {/* Image insert dialog */}
+    {showImageDialog && (
+      <ImageInsertDialog
+        onClose={() => setShowImageDialog(false)}
+        onInsert={handleImageInsert}
+      />
+    )}
+  </>);
 }
