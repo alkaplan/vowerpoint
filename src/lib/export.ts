@@ -18,7 +18,7 @@ export const importFromJSON = (file: File): Promise<Presentation> => {
       try {
         const data = JSON.parse(e.target?.result as string);
         resolve(data as Presentation);
-      } catch (err) {
+      } catch {
         reject(new Error('Invalid JSON file'));
       }
     };

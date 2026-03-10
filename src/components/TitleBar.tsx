@@ -58,7 +58,7 @@ export function TitleBar() {
             <Star size={14} fill={starred ? '#FBBC04' : 'none'} color={starred ? '#FBBC04' : '#5F6368'} />
           </button>
         </div>
-        <span className="text-xs text-gs-text-secondary ml-2 shrink-0">{saveLabel}</span>
+        <span className={`text-xs ml-2 shrink-0 ${saveStatus === 'saving' ? 'text-gs-blue save-indicator-saving' : 'text-gs-text-secondary'}`}>{saveLabel}</span>
       </div>
 
       {/* Right: Present + Share + Zoom + Avatar */}
@@ -78,10 +78,10 @@ export function TitleBar() {
         <button className="px-3 py-1 text-xs border border-gs-border rounded hover:bg-gs-hover text-gs-text">
           Share
         </button>
-        <button
-          onClick={() => startPresentation(0)}
-          className="px-3 py-1 text-xs bg-gs-blue text-white rounded hover:bg-blue-600 flex items-center gap-1"
-        >
+                <button
+                  onClick={() => startPresentation(0)}
+                  className="present-btn px-3 py-1 text-xs bg-gs-blue text-white rounded hover:bg-blue-600 flex items-center gap-1"
+                >
           <Play size={12} fill="white" />
           Present
         </button>

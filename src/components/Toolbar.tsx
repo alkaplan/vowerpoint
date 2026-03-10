@@ -3,10 +3,10 @@
 import React, { useState } from 'react';
 import { usePresentationStore } from '@/store/presentationStore';
 import {
-  Undo2, Redo2, Printer, PaintBucket, MousePointer2, Type, Image, Square,
+  Undo2, Redo2, Printer, MousePointer2, Type, Image, Square,
   Minus, Bold, Italic, Underline, Strikethrough, AlignLeft, AlignCenter,
-  AlignRight, AlignJustify, List, ListOrdered, IndentDecrease, IndentIncrease,
-  Link, Pipette, ChevronDown, Palette, Table, Lock
+  AlignRight, AlignJustify,
+  Pipette, ChevronDown, Table, Lock
 } from 'lucide-react';
 import { ColorPicker } from './ColorPicker';
 import { ShapePalette } from './ShapePalette';

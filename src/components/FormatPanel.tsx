@@ -139,14 +139,14 @@ function SlideProperties() {
 function ElementProperties() {
   const store = usePresentationStore();
   const elements = store.getSelectedElements();
-  if (elements.length === 0) return null;
-  const el = elements[0];
-  const style = el.style;
-
   const [showFill, setShowFill] = useState(false);
   const [showStroke, setShowStroke] = useState(false);
   const [showShadow, setShowShadow] = useState(false);
   const [showFontColor, setShowFontColor] = useState(false);
+
+  if (elements.length === 0) return null;
+  const el = elements[0];
+  const style = el.style;
 
   const updateStyle = (updates: Record<string, unknown>) => {
     store.updateElement(el.id, { style: { ...el.style, ...updates } });

@@ -65,8 +65,8 @@ export function MenuBar() {
         try {
           const data = await importFromJSON(file);
           store.setPresentation(data);
-        } catch (err) {
-          alert('Failed to import: invalid file');
+          } catch {
+            alert('Failed to import: invalid file');
         }
       }
     };

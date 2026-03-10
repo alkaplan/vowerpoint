@@ -3,8 +3,7 @@ import { temporal } from 'zundo';
 import { v4 as uuidv4 } from 'uuid';
 import {
   Presentation, Slide, SlideElement, EditorState, ToolType, ShapeType,
-  ElementStyle, SlideBackground, LayoutType, Theme, SlideTransition,
-  TextContent
+  SlideBackground, LayoutType, Theme, SlideTransition,
 } from '@/types/presentation';
 import { getDefaultTheme } from '@/lib/themes';
 import { getLayoutDefinition } from '@/lib/layouts';

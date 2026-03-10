@@ -65,9 +65,13 @@ input[type="color"]::-webkit-color-swatch {
   white-space: nowrap;
   font-size: 13px;
   min-height: 28px;
+  transition: background 0.1s ease;
 }
 .menu-item:hover {
-  background: #F1F3F4;
+  background: #E8EAED;
+}
+.menu-item:active {
+  background: #D3E3FD;
 }
 .menu-item.disabled {
   opacity: 0.4;
@@ -91,18 +95,29 @@ input[type="color"]::-webkit-color-swatch {
   border: none;
   background: transparent;
   color: #5F6368;
-  transition: background 0.1s;
+  transition: background 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
 }
 .toolbar-btn:hover {
   background: #E8EAED;
+  color: #3C4043;
+}
+.toolbar-btn:active {
+  background: #D2D4D7;
 }
 .toolbar-btn.active {
   background: #D3E3FD;
   color: #1967D2;
 }
+.toolbar-btn.active:hover {
+  background: #C2D7FB;
+}
 .toolbar-btn:disabled {
   opacity: 0.4;
   cursor: default;
+}
+.toolbar-btn:disabled:hover {
+  background: transparent;
+  color: #5F6368;
 }
 
 .toolbar-separator {
@@ -119,13 +134,15 @@ input[type="color"]::-webkit-color-swatch {
   cursor: pointer;
   border: 2px solid transparent;
   border-radius: 2px;
-  transition: border-color 0.1s;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
 }
 .slide-thumbnail:hover {
   border-color: #BDC1C6;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
 }
 .slide-thumbnail.selected {
   border-color: #4285F4;
+  box-shadow: 0 1px 4px rgba(66,133,244,0.2);
 }
 .slide-thumbnail.skipped {
   opacity: 0.5;
@@ -142,9 +159,13 @@ input[type="color"]::-webkit-color-swatch {
   font-weight: 500;
   color: #3C4043;
   border-bottom: 1px solid #E8EAED;
+  transition: background 0.15s ease;
 }
 .accordion-header:hover {
-  background: #F8F9FA;
+  background: #F1F3F4;
+}
+.accordion-header:active {
+  background: #E8EAED;
 }
 
 /* Presentation mode */
@@ -166,11 +187,23 @@ input[type="color"]::-webkit-color-swatch {
   position: absolute;
   background: white;
   border: 1px solid #DADCE0;
-  border-radius: 4px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.12), 0 1px 3px rgba(0,0,0,0.08);
   z-index: 1000;
   min-width: 200px;
   padding: 4px 0;
+  animation: dropdownFadeIn 0.12s ease-out;
+}
+
+@keyframes dropdownFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 /* Format panel inputs */
@@ -182,9 +215,14 @@ input[type="color"]::-webkit-color-swatch {
   padding: 0 8px;
   font-size: 12px;
   outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 .format-input:focus {
   border-color: #4285F4;
+  box-shadow: 0 0 0 2px rgba(66,133,244,0.15);
+}
+.format-input:hover:not(:focus) {
+  border-color: #BDC1C6;
 }
 
 /* Tooltip */
@@ -218,4 +256,67 @@ input[type="color"]::-webkit-color-swatch {
   pointer-events: none;
   z-index: 10001;
   transform: translate(-50%, -50%);
+}
+
+/* Save indicator animation */
+@keyframes savePulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+.save-indicator-saving {
+  animation: savePulse 1.2s ease-in-out infinite;
+}
+
+/* Button base transitions */
+button {
+  transition: background-color 0.15s ease, opacity 0.15s ease;
+}
+
+/* Select dropdowns */
+select {
+  transition: border-color 0.15s ease;
+}
+select:hover {
+  border-color: #BDC1C6;
+}
+select:focus {
+  border-color: #4285F4;
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(66,133,244,0.15);
+}
+
+/* Input fields */
+input[type="number"],
+input[type="text"] {
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+input[type="number"]:hover:not(:focus),
+input[type="text"]:hover:not(:focus) {
+  border-color: #BDC1C6;
+}
+input[type="number"]:focus,
+input[type="text"]:focus {
+  border-color: #4285F4;
+  box-shadow: 0 0 0 2px rgba(66,133,244,0.15);
+}
+
+/* Present button glow */
+.present-btn {
+  transition: background-color 0.2s ease, box-shadow 0.2s ease, transform 0.1s ease;
+}
+.present-btn:hover {
+  box-shadow: 0 1px 4px rgba(66,133,244,0.4);
+}
+.present-btn:active {
+  transform: scale(0.97);
+}
+
+/* Panel transitions */
+.panel-enter {
+  transition: width 0.2s ease, opacity 0.2s ease;
+}
+
+/* Context menu */
+.context-menu {
+  animation: dropdownFadeIn 0.1s ease-out;
 }

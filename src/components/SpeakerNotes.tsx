@@ -8,7 +8,7 @@ export function SpeakerNotes() {
   const store = usePresentationStore();
   const slide = store.getCurrentSlide();
   const [height, setHeight] = useState(80);
-  const [isDragging, setIsDragging] = useState(false);
+  const [, setIsDragging] = useState(false);
   const startY = useRef(0);
   const startHeight = useRef(0);
 

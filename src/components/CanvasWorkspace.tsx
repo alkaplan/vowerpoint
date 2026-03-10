@@ -3,9 +3,9 @@
 import React, { useRef, useState, useCallback, useEffect } from 'react';
 import { usePresentationStore } from '@/store/presentationStore';
 import { v4 as uuidv4 } from 'uuid';
-import { SlideElement, ShapeType } from '@/types/presentation';
+import { SlideElement } from '@/types/presentation';
 import { getShapeDefinition } from '@/lib/shapes';
-import { Trash2, Copy, Clipboard, Layers, Lock, Unlock, ArrowUp, ArrowDown, ChevronsUp, ChevronsDown } from 'lucide-react';
+import { Trash2, Copy, Clipboard, Lock, Unlock, ArrowUp, ArrowDown, ChevronsUp, ChevronsDown } from 'lucide-react';
 
 // ========== Context Menu ==========
 function ContextMenu({ x, y, elementId, onClose }: { x: number; y: number; elementId: string; onClose: () => void }) {
@@ -177,8 +177,8 @@ function ElementRenderer({
 }) {
   const store = usePresentationStore();
   const [isDragging, setIsDragging] = useState(false);
-  const [isResizing, setIsResizing] = useState<string | null>(null);
-  const [isRotating, setIsRotating] = useState(false);
+  const [, setIsResizing] = useState<string | null>(null);
+  const [, setIsRotating] = useState(false);
   const dragStart = useRef({ x: 0, y: 0, elX: 0, elY: 0 });
   const resizeStart = useRef({ x: 0, y: 0, w: 0, h: 0, elX: 0, elY: 0 });
   const rotateStart = useRef({ angle: 0, startAngle: 0 });
@@ -618,12 +618,12 @@ export function CanvasWorkspace() {
   const store = usePresentationStore();
   const slide = store.getCurrentSlide();
   const canvasRef = useRef<HTMLDivElement>(null);
-  const [isDrawing, setIsDrawing] = useState(false);
+  const [, setIsDrawing] = useState(false);
   const drawStart = useRef({ x: 0, y: 0 });
   const [drawRect, setDrawRect] = useState<{ x: number; y: number; w: number; h: number } | null>(null);
   const [marquee, setMarquee] = useState<{ x: number; y: number; w: number; h: number } | null>(null);
   const [showImageDialog, setShowImageDialog] = useState(false);
-  const [draggedElementId, setDraggedElementId] = useState<string | null>(null);
+  const [draggedElementId, ] = useState<string | null>(null);
 
   const scale = store.zoom / 100;
   const slideW = 960;
@@ -799,7 +799,8 @@ export function CanvasWorkspace() {
     }
   }, [store]);
 
-  const handleElementDoubleClick = useCallback((id: string) => {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const handleElementDoubleClick = useCallback((_id: string) => {
     // Enter text editing mode - handled in ElementRenderer
   }, []);
 
