@@ -184,6 +184,12 @@ export function KeyboardShortcuts() {
         return;
       }
 
+      // Don't handle non-modifier shortcuts when typing in input fields
+      const target = e.target as HTMLElement;
+      if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) {
+        return;
+      }
+
       // Non-modifier shortcuts
       switch (e.key) {
         case 'Delete':
