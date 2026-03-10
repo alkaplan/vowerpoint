@@ -1,4 +1,5 @@
 import { Presentation } from '@/types/presentation';
+import DOMPurify from 'dompurify';
 
 export const exportToJSON = (presentation: Presentation): void => {
   const data = JSON.stringify(presentation, null, 2);
@@ -17,6 +18,18 @@ export const importFromJSON = (file: File): Promise<Presentation> => {
     reader.onload = (e) => {
       try {
         const data = JSON.parse(e.target?.result as string);
+        // Sanitize HTML content in all elements to prevent XSS
+        if (data.slides && Array.isArray(data.slides)) {
+          for (const slide of data.slides) {
+            if (slide.elements && Array.isArray(slide.elements)) {
+              for (const element of slide.elements) {
+                if (element.content && typeof element.content.html === 'string') {
+                  element.content.html = DOMPurify.sanitize(element.content.html);
+                }
+              }
+            }
+          }
+        }
         resolve(data as Presentation);
       } catch {
         reject(new Error('Invalid JSON file'));

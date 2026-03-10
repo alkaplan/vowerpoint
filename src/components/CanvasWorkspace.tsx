@@ -540,7 +540,7 @@ function ElementRenderer({
             stroke={element.style.stroke || '#000000'}
             strokeWidth={element.style.strokeWidth || 2}
             strokeDasharray={element.style.strokeDasharray || 'none'}
-            markerEnd={element.style.arrowEnd ? `url(#arrowhead-${element.id})` : undefined}
+            markerEnd={element.style.arrowEnd && element.style.arrowEnd !== 'none' ? `url(#arrowhead-${element.id})` : undefined}
           />
           <defs>
             <marker id={`arrowhead-${element.id}`} markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
