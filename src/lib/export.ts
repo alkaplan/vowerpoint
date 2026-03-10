@@ -1,5 +1,5 @@
 import { Presentation } from '@/types/presentation';
-import DOMPurify from 'dompurify';
+import { sanitizeHTML } from '@/lib/sanitize';
 
 export const exportToJSON = (presentation: Presentation): void => {
   const data = JSON.stringify(presentation, null, 2);
@@ -20,10 +20,10 @@ export const sanitizePresentation = (presentation: Presentation): Presentation =
         for (const element of slide.elements) {
           const content = element.content as Record<string, unknown>;
           if (content && typeof content.html === 'string') {
-            content.html = DOMPurify.sanitize(content.html);
+            content.html = sanitizeHTML(content.html);
           }
           if (content && typeof content.text === 'string') {
-            content.text = DOMPurify.sanitize(content.text);
+            content.text = sanitizeHTML(content.text);
           }
         }
       }

@@ -4,7 +4,7 @@ import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { usePresentationStore } from '@/store/presentationStore';
 import { ChevronLeft, ChevronRight, X } from 'lucide-react';
 import { getShapeDefinition } from '@/lib/shapes';
-import DOMPurify from 'dompurify';
+import { sanitizeHTML } from '@/lib/sanitize';
 
 export function PresentationMode() {
   const store = usePresentationStore();
@@ -224,7 +224,7 @@ export function PresentationMode() {
                   display: 'flex',
                   alignItems: el.style.verticalAlign === 'middle' ? 'center' : el.style.verticalAlign === 'bottom' ? 'flex-end' : 'flex-start',
                 }}>
-                  <div dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(textContent?.html || textContent?.text || '') }} />
+                  <div dangerouslySetInnerHTML={{ __html: sanitizeHTML(textContent?.html || textContent?.text || '') }} />
                 </div>
               );
             }

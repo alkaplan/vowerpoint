@@ -6,7 +6,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { SlideElement } from '@/types/presentation';
 import { getShapeDefinition } from '@/lib/shapes';
 import { Trash2, Copy, Clipboard, Lock, Unlock, ArrowUp, ArrowDown, ChevronsUp, ChevronsDown } from 'lucide-react';
-import DOMPurify from 'dompurify';
+import { sanitizeHTML } from '@/lib/sanitize';
 
 // ========== Context Menu ==========
 function ContextMenu({ x, y, elementId, onClose }: { x: number; y: number; elementId: string; onClose: () => void }) {
@@ -326,7 +326,7 @@ function ElementRenderer({
     // Save content on blur
     if (textRef.current) {
       const text = textRef.current.innerText;
-      const html = DOMPurify.sanitize(textRef.current.innerHTML);
+      const html = sanitizeHTML(textRef.current.innerHTML);
       store.updateElement(element.id, {
         content: { ...element.content, text, html },
       });
@@ -433,7 +433,7 @@ function ElementRenderer({
               style={{ ...editableStyle, width: '100%', outline: 'none' }}
               onInput={handleTextInput}
               onBlur={handleTextBlur}
-              dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(textContent?.html || textContent?.text || '') }}
+              dangerouslySetInnerHTML={{ __html: sanitizeHTML(textContent?.html || textContent?.text || '') }}
               className="cursor-text"
             />
           </div>
@@ -442,7 +442,7 @@ function ElementRenderer({
 
       return (
         <div style={textStyle}>
-          <div dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(textContent?.html || textContent?.text || '') }} />
+          <div dangerouslySetInnerHTML={{ __html: sanitizeHTML(textContent?.html || textContent?.text || '') }} />
         </div>
       );
     }
@@ -504,7 +504,7 @@ function ElementRenderer({
                   onInput={handleTextInput}
                   onBlur={handleTextBlur}
                   className="outline-none cursor-text w-full"
-                  dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(textContent?.html || textContent?.text || '') }}
+                  dangerouslySetInnerHTML={{ __html: sanitizeHTML(textContent?.html || textContent?.text || '') }}
                 />
               ) : (
                 <span>{textContent.text}</span>
