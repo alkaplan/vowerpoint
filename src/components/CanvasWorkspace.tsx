@@ -873,7 +873,7 @@ export function CanvasWorkspace() {
       <div
         data-slide-area
         data-slide-render
-        className={`relative shadow-lg ${store.currentSlideIndex === store.currentSlideIndex ? 'current' : ''}`}
+        className="relative shadow-lg current"
         style={{
           width: slideW * scale,
           height: slideH * scale,

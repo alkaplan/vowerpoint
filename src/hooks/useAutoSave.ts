@@ -4,6 +4,7 @@ import { useEffect, useRef, useCallback } from 'react';
 import { usePresentationStore } from '@/store/presentationStore';
 import { supabase, isSupabaseConfigured } from '@/lib/supabase';
 import { Presentation } from '@/types/presentation';
+import { sanitizePresentation } from '@/lib/export';
 
 const LOCAL_STORAGE_KEY = 'vowerpoint_presentation';
 const AUTO_SAVE_DELAY = 3000; // 3 seconds debounce
@@ -90,7 +91,12 @@ export function useAutoSave() {
   // Debounced save function
   const debouncedSave = useCallback(async (presentation: Presentation) => {
     const serialized = JSON.stringify(presentation);
-    if (serialized === lastSavedRef.current) return;
+    if (serialized === lastSavedRef.current) {
+      if (usePresentationStore.getState().saveStatus === 'unsaved') {
+        store.setSaveStatus('saved');
+      }
+      return;
+    }
 
     store.setSaveStatus('saving');
 
@@ -139,9 +145,10 @@ export function useAutoSave() {
       // Try Supabase first
       if (isSupabaseConfigured()) {
         const supabaseData = await loadFromSupabase();
-        if (supabaseData) {
-          store.setPresentation(supabaseData);
-          lastSavedRef.current = JSON.stringify(supabaseData);
+          if (supabaseData) {
+            sanitizePresentation(supabaseData);
+            store.setPresentation(supabaseData);
+            lastSavedRef.current = JSON.stringify(supabaseData);
           isInitialLoadDone.current = true;
           return;
         }
@@ -150,6 +157,7 @@ export function useAutoSave() {
       // Fall back to localStorage
       const localData = loadFromLocalStorage();
       if (localData) {
+        sanitizePresentation(localData);
         store.setPresentation(localData);
         lastSavedRef.current = JSON.stringify(localData);
       }

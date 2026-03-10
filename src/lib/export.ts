@@ -12,24 +12,30 @@ export const exportToJSON = (presentation: Presentation): void => {
   URL.revokeObjectURL(url);
 };
 
+// Sanitize all HTML content in a presentation to prevent XSS
+export const sanitizePresentation = (presentation: Presentation): Presentation => {
+  if (presentation.slides && Array.isArray(presentation.slides)) {
+    for (const slide of presentation.slides) {
+      if (slide.elements && Array.isArray(slide.elements)) {
+        for (const element of slide.elements) {
+          const content = element.content as Record<string, unknown>;
+          if (content && typeof content.html === 'string') {
+            content.html = DOMPurify.sanitize(content.html);
+          }
+        }
+      }
+    }
+  }
+  return presentation;
+};
+
 export const importFromJSON = (file: File): Promise<Presentation> => {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = (e) => {
       try {
         const data = JSON.parse(e.target?.result as string);
-        // Sanitize HTML content in all elements to prevent XSS
-        if (data.slides && Array.isArray(data.slides)) {
-          for (const slide of data.slides) {
-            if (slide.elements && Array.isArray(slide.elements)) {
-              for (const element of slide.elements) {
-                if (element.content && typeof element.content.html === 'string') {
-                  element.content.html = DOMPurify.sanitize(element.content.html);
-                }
-              }
-            }
-          }
-        }
+        sanitizePresentation(data);
         resolve(data as Presentation);
       } catch {
         reject(new Error('Invalid JSON file'));
