@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useRef, useState, useCallback, useEffect } from 'react';
+import ReactDOM from 'react-dom';
 import { usePresentationStore } from '@/store/presentationStore';
 import { v4 as uuidv4 } from 'uuid';
 import { SlideElement } from '@/types/presentation';
@@ -633,13 +634,14 @@ function ElementRenderer({
         {handles}
         {lockIndicator}
       </div>
-      {contextMenu && (
+      {contextMenu && typeof document !== 'undefined' && ReactDOM.createPortal(
         <ContextMenu
           x={contextMenu.x}
           y={contextMenu.y}
           elementId={element.id}
           onClose={() => setContextMenu(null)}
-        />
+        />,
+        document.body
       )}
     </>
   );
