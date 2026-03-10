@@ -37,7 +37,6 @@
   "devDependencies": {
     "@types/uuid": "^10.0.0",
     "eslint": "^8.57.1",
-    "eslint-config-next": "^14.2.35",
-    "jspdf": "^2.5.2"
+    "eslint-config-next": "^14.2.35"
   }
 }
