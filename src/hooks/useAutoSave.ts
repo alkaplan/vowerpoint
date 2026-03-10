@@ -83,29 +83,34 @@ const loadFromSupabase = async (id?: string): Promise<Presentation | null> => {
 };
 
 export function useAutoSave() {
-  const store = usePresentationStore();
+  // Use selector-based subscriptions for stable references — avoids
+  // recreating debouncedSave on every unrelated store change.
+  const setSaveStatus = usePresentationStore(s => s.setSaveStatus);
+  const setPresentation = usePresentationStore(s => s.setPresentation);
+  const saveStatus = usePresentationStore(s => s.saveStatus);
+  const presentation = usePresentationStore(s => s.presentation);
   const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastSavedRef = useRef<string>('');
   const isInitialLoadDone = useRef(false);
 
-  // Debounced save function
-  const debouncedSave = useCallback(async (presentation: Presentation) => {
-    const serialized = JSON.stringify(presentation);
+  // Debounced save function — depends only on stable action references
+  const debouncedSave = useCallback(async (pres: Presentation) => {
+    const serialized = JSON.stringify(pres);
     if (serialized === lastSavedRef.current) {
       if (usePresentationStore.getState().saveStatus === 'unsaved') {
-        store.setSaveStatus('saved');
+        setSaveStatus('saved');
       }
       return;
     }
 
-    store.setSaveStatus('saving');
+    setSaveStatus('saving');
 
     // Always save to localStorage
-    saveToLocalStorage(presentation);
+    saveToLocalStorage(pres);
 
     // Try Supabase if configured
     if (isSupabaseConfigured()) {
-      const success = await saveToSupabase(presentation);
+      const success = await saveToSupabase(pres);
       if (!success) {
         // Fallback already saved to localStorage
         console.warn('Supabase save failed, data saved to localStorage');
@@ -115,20 +120,20 @@ export function useAutoSave() {
     lastSavedRef.current = serialized;
     // Only set 'saved' if no new changes occurred during the async save
     if (usePresentationStore.getState().saveStatus === 'saving') {
-      store.setSaveStatus('saved');
+      setSaveStatus('saved');
     }
-  }, [store]);
+  }, [setSaveStatus]);
 
   // Watch for changes and auto-save
   useEffect(() => {
     if (!isInitialLoadDone.current) return;
 
-    if (store.saveStatus === 'unsaved') {
+    if (saveStatus === 'unsaved') {
       if (saveTimeoutRef.current) {
         clearTimeout(saveTimeoutRef.current);
       }
       saveTimeoutRef.current = setTimeout(() => {
-        debouncedSave(store.presentation);
+        debouncedSave(usePresentationStore.getState().presentation);
       }, AUTO_SAVE_DELAY);
     }
 
@@ -137,7 +142,7 @@ export function useAutoSave() {
         clearTimeout(saveTimeoutRef.current);
       }
     };
-  }, [store.saveStatus, store.presentation, debouncedSave]);
+  }, [saveStatus, debouncedSave]);
 
   // Initial load on mount
   useEffect(() => {
@@ -147,7 +152,7 @@ export function useAutoSave() {
         const supabaseData = await loadFromSupabase();
           if (supabaseData) {
             sanitizePresentation(supabaseData);
-            store.setPresentation(supabaseData);
+            setPresentation(supabaseData);
             lastSavedRef.current = JSON.stringify(supabaseData);
           isInitialLoadDone.current = true;
           return;
@@ -158,7 +163,7 @@ export function useAutoSave() {
       const localData = loadFromLocalStorage();
       if (localData) {
         sanitizePresentation(localData);
-        store.setPresentation(localData);
+        setPresentation(localData);
         lastSavedRef.current = JSON.stringify(localData);
       }
       isInitialLoadDone.current = true;
@@ -171,14 +176,14 @@ export function useAutoSave() {
   // Save on page unload
   useEffect(() => {
     const handleBeforeUnload = () => {
-      saveToLocalStorage(store.presentation);
+      saveToLocalStorage(usePresentationStore.getState().presentation);
     };
     window.addEventListener('beforeunload', handleBeforeUnload);
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
-  }, [store.presentation]);
+  }, []);
 
   return {
-    saveNow: () => debouncedSave(store.presentation),
+    saveNow: () => debouncedSave(presentation),
     isSupabaseEnabled: isSupabaseConfigured(),
   };
 }
