@@ -22,9 +22,10 @@ export const sanitizePresentation = (presentation: Presentation): Presentation =
           if (content && typeof content.html === 'string') {
             content.html = sanitizeHTML(content.html);
           }
-          if (content && typeof content.text === 'string') {
-            content.text = sanitizeHTML(content.text);
-          }
+          // content.text is plain text from innerText — do NOT sanitize with DOMPurify
+          // as it would interpret angle brackets as HTML tags and corrupt content.
+          // The text field is only used as a dangerouslySetInnerHTML fallback at render
+          // time, where sanitizeHTML() is already applied at the render point.
         }
       }
     }
