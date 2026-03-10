@@ -3,6 +3,8 @@
 import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { usePresentationStore } from '@/store/presentationStore';
 import { ChevronLeft, ChevronRight, X } from 'lucide-react';
+import { getShapeDefinition } from '@/lib/shapes';
+import DOMPurify from 'dompurify';
 
 export function PresentationMode() {
   const store = usePresentationStore();
@@ -222,26 +224,61 @@ export function PresentationMode() {
                   display: 'flex',
                   alignItems: el.style.verticalAlign === 'middle' ? 'center' : el.style.verticalAlign === 'bottom' ? 'flex-end' : 'flex-start',
                 }}>
-                  <div dangerouslySetInnerHTML={{ __html: textContent?.html || textContent?.text || '' }} />
+                  <div dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(textContent?.html || textContent?.text || '') }} />
                 </div>
               );
             }
 
             if (el.type === 'shape') {
+              const shapeDef = el.shapeType ? getShapeDefinition(el.shapeType) : null;
               return (
-                <div key={el.id} style={{
-                  ...elStyle,
-                  backgroundColor: el.style.fill || '#CFE2FF',
-                  border: el.style.stroke ? `${el.style.strokeWidth || 1}px solid ${el.style.stroke}` : 'none',
-                  borderRadius: el.shapeType === 'ellipse' ? '50%' : el.style.borderRadius || 0,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: el.style.fontSize || 14,
-                  fontFamily: el.style.fontFamily || 'Arial',
-                  color: el.style.color || '#000',
-                }}>
-                  {textContent?.text || ''}
+                <div key={el.id} style={{ ...elStyle, position: 'absolute' }}>
+                  <div style={{ width: '100%', height: '100%', position: 'relative' }}>
+                    {shapeDef ? (
+                      <svg
+                        viewBox={`0 0 ${el.width} ${el.height}`}
+                        style={{ width: '100%', height: '100%', position: 'absolute', top: 0, left: 0 }}
+                      >
+                        <path
+                          d={shapeDef.getSvgPath(el.width, el.height)}
+                          fill={el.style.fill || '#CFE2FF'}
+                          stroke={el.style.stroke || 'none'}
+                          strokeWidth={el.style.strokeWidth || 0}
+                          strokeDasharray={el.style.strokeDasharray || 'none'}
+                          opacity={el.style.opacity ?? 1}
+                        />
+                      </svg>
+                    ) : (
+                      <div
+                        style={{
+                          width: '100%',
+                          height: '100%',
+                          backgroundColor: el.style.fill || '#CFE2FF',
+                          border: el.style.stroke ? `${el.style.strokeWidth || 1}px solid ${el.style.stroke}` : 'none',
+                          borderRadius: el.shapeType === 'ellipse' ? '50%' : el.style.borderRadius || 0,
+                        }}
+                      />
+                    )}
+                    {textContent?.text && (
+                      <div
+                        style={{
+                          position: 'absolute',
+                          inset: 0,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          fontSize: el.style.fontSize || 14,
+                          fontFamily: el.style.fontFamily || 'Arial',
+                          color: el.style.color || '#000',
+                          textAlign: 'center',
+                          padding: '8px',
+                          overflow: 'hidden',
+                        }}
+                      >
+                        <span>{textContent.text}</span>
+                      </div>
+                    )}
+                  </div>
                 </div>
               );
             }

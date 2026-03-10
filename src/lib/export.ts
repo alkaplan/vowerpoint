@@ -22,6 +22,9 @@ export const sanitizePresentation = (presentation: Presentation): Presentation =
           if (content && typeof content.html === 'string') {
             content.html = DOMPurify.sanitize(content.html);
           }
+          if (content && typeof content.text === 'string') {
+            content.text = DOMPurify.sanitize(content.text);
+          }
         }
       }
     }

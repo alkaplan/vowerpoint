@@ -433,7 +433,7 @@ function ElementRenderer({
               style={{ ...editableStyle, width: '100%', outline: 'none' }}
               onInput={handleTextInput}
               onBlur={handleTextBlur}
-              dangerouslySetInnerHTML={{ __html: textContent?.html || textContent?.text || '' }}
+              dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(textContent?.html || textContent?.text || '') }}
               className="cursor-text"
             />
           </div>
@@ -442,7 +442,7 @@ function ElementRenderer({
 
       return (
         <div style={textStyle}>
-          <div dangerouslySetInnerHTML={{ __html: textContent?.html || textContent?.text || '' }} />
+          <div dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(textContent?.html || textContent?.text || '') }} />
         </div>
       );
     }
@@ -504,7 +504,7 @@ function ElementRenderer({
                   onInput={handleTextInput}
                   onBlur={handleTextBlur}
                   className="outline-none cursor-text w-full"
-                  dangerouslySetInnerHTML={{ __html: textContent?.html || textContent?.text || '' }}
+                  dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(textContent?.html || textContent?.text || '') }}
                 />
               ) : (
                 <span>{textContent.text}</span>
