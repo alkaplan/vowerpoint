@@ -167,12 +167,16 @@ function ElementRenderer({
   isSelected,
   onSelect,
   onDoubleClick,
+  onDragStart,
+  onDragEnd,
   scale,
 }: {
   element: SlideElement;
   isSelected: boolean;
   onSelect: (id: string, additive: boolean) => void;
   onDoubleClick: (id: string) => void;
+  onDragStart?: (id: string) => void;
+  onDragEnd?: () => void;
   scale: number;
 }) {
   const store = usePresentationStore();
@@ -196,6 +200,7 @@ function ElementRenderer({
     if (editingText) return;
 
     setIsDragging(true);
+    onDragStart?.(element.id);
     dragStart.current = {
       x: e.clientX, y: e.clientY,
       elX: element.x, elY: element.y,
@@ -211,12 +216,13 @@ function ElementRenderer({
     };
     const handleUp = () => {
       setIsDragging(false);
+      onDragEnd?.();
       document.removeEventListener('mousemove', handleMove);
       document.removeEventListener('mouseup', handleUp);
     };
     document.addEventListener('mousemove', handleMove);
     document.addEventListener('mouseup', handleUp);
-  }, [element, onSelect, scale, store, editingText]);
+  }, [element, onSelect, onDragStart, onDragEnd, scale, store, editingText]);
 
   const handleResizeStart = useCallback((handle: string, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -634,7 +640,7 @@ export function CanvasWorkspace() {
   const [drawRect, setDrawRect] = useState<{ x: number; y: number; w: number; h: number } | null>(null);
   const [marquee, setMarquee] = useState<{ x: number; y: number; w: number; h: number } | null>(null);
   const [showImageDialog, setShowImageDialog] = useState(false);
-  const [draggedElementId, ] = useState<string | null>(null);
+  const [draggedElementId, setDraggedElementId] = useState<string | null>(null);
 
   const scale = store.zoom / 100;
   const slideW = 960;
@@ -891,6 +897,8 @@ export function CanvasWorkspace() {
               isSelected={store.selectedElementIds.includes(el.id)}
               onSelect={handleElementSelect}
               onDoubleClick={handleElementDoubleClick}
+              onDragStart={setDraggedElementId}
+              onDragEnd={() => setDraggedElementId(null)}
               scale={scale}
             />
           ))}

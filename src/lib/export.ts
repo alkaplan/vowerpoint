@@ -77,3 +77,43 @@ export const exportToPDF = async (slideElements: HTMLElement[], title: string): 
 
   pdf.save(`${title || 'presentation'}.pdf`);
 };
+
+// Export all slides to PDF by iterating through each slide index
+export const exportToPDFAllSlides = async (
+  store: { currentSlideIndex: number; presentation: Presentation; setCurrentSlideIndex: (i: number) => void },
+  title: string
+): Promise<void> => {
+  const html2canvas = (await import('html2canvas')).default;
+  const { jsPDF } = await import('jspdf');
+
+  const pdf = new jsPDF({
+    orientation: 'landscape',
+    unit: 'px',
+    format: [960, 540],
+  });
+
+  const originalIndex = store.currentSlideIndex;
+  const slideCount = store.presentation.slides.length;
+
+  for (let i = 0; i < slideCount; i++) {
+    store.setCurrentSlideIndex(i);
+    // Wait for React to render the new slide
+    await new Promise(resolve => setTimeout(resolve, 150));
+    
+    const el = document.querySelector('[data-slide-render]') as HTMLElement;
+    if (!el) continue;
+
+    if (i > 0) pdf.addPage([960, 540], 'landscape');
+    const canvas = await html2canvas(el, {
+      backgroundColor: '#ffffff',
+      scale: 2,
+      useCORS: true,
+    });
+    const imgData = canvas.toDataURL('image/png');
+    pdf.addImage(imgData, 'PNG', 0, 0, 960, 540);
+  }
+
+  // Restore original slide
+  store.setCurrentSlideIndex(originalIndex);
+  pdf.save(`${title || 'presentation'}.pdf`);
+};

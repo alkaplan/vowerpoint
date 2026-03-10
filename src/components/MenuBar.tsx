@@ -2,7 +2,7 @@
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { usePresentationStore, createNewPresentation } from '@/store/presentationStore';
-import { exportToJSON, importFromJSON, exportToPNG, exportToPDF } from '@/lib/export';
+import { exportToJSON, importFromJSON, exportToPNG, exportToPDFAllSlides } from '@/lib/export';
 
 interface MenuItem {
   label: string;
@@ -79,7 +79,7 @@ export function MenuBar() {
       { label: 'Open', shortcut: 'Ctrl+O', action: handleImport },
       { label: 'Make a copy', action: () => { const copy = JSON.parse(JSON.stringify(store.presentation)); copy.title = store.presentation.title + ' (copy)'; exportToJSON(copy); } },
       { label: '', separator: true },
-      { label: 'Download as PDF', action: () => { const els = document.querySelectorAll('[data-slide-render]'); if (els.length) exportToPDF(Array.from(els) as HTMLElement[], store.presentation.title); } },
+      { label: 'Download as PDF', action: () => { exportToPDFAllSlides(store, store.presentation.title); } },
       { label: 'Download as PNG (current slide)', action: () => { const el = document.querySelector('[data-slide-render].current') as HTMLElement; if (el) exportToPNG(el, `slide-${store.currentSlideIndex + 1}.png`); } },
       { label: 'Download as JSON', action: () => exportToJSON(store.presentation) },
       { label: '', separator: true },

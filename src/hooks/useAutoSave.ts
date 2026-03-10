@@ -107,7 +107,10 @@ export function useAutoSave() {
     }
 
     lastSavedRef.current = serialized;
-    store.setSaveStatus('saved');
+    // Only set 'saved' if no new changes occurred during the async save
+    if (usePresentationStore.getState().saveStatus === 'saving') {
+      store.setSaveStatus('saved');
+    }
   }, [store]);
 
   // Watch for changes and auto-save
