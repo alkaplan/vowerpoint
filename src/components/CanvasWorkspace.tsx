@@ -192,6 +192,21 @@ function ElementRenderer({
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
   const textRef = useRef<HTMLDivElement>(null);
 
+  // Safety net: if element is deselected while editing, save content and exit edit mode
+  useEffect(() => {
+    if (!isSelected && editingText) {
+      if (textRef.current) {
+        const text = textRef.current.innerText;
+        const html = sanitizeHTML(textRef.current.innerHTML);
+        store.updateElement(element.id, {
+          content: { ...element.content, text, html },
+        });
+      }
+      setEditingText(false);
+      store.setIsTextEditing(false);
+    }
+  }, [isSelected, editingText, store, element.id, element.content]);
+
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
     if (element.locked) {
@@ -681,6 +696,10 @@ export function CanvasWorkspace() {
     const tool = store.activeTool;
 
     if (tool === 'select') {
+      // Explicitly blur active element to trigger contentEditable onBlur save
+      if (document.activeElement instanceof HTMLElement) {
+        document.activeElement.blur();
+      }
       store.setSelectedElementIds([]);
       // Start marquee selection
       setIsDrawing(true);
