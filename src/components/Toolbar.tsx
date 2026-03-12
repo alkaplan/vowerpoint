@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useRef, useCallback } from 'react';
+import ReactDOM from 'react-dom';
 import { usePresentationStore } from '@/store/presentationStore';
 import {
   Undo2, Redo2, Printer, MousePointer2, Type, Image, Square,
@@ -17,6 +18,18 @@ export function Toolbar() {
   const [showFillColor, setShowFillColor] = useState(false);
   const [showStrokeColor, setShowStrokeColor] = useState(false);
   const [showFontColor, setShowFontColor] = useState(false);
+
+  const shapeBtnRef = useRef<HTMLButtonElement>(null);
+  const fillBtnRef = useRef<HTMLButtonElement>(null);
+  const strokeBtnRef = useRef<HTMLButtonElement>(null);
+  const fontColorBtnRef = useRef<HTMLButtonElement>(null);
+
+  // Get position below a button for portal-rendered dropdowns
+  const getDropdownPos = useCallback((ref: React.RefObject<HTMLButtonElement | null>) => {
+    if (!ref.current) return { top: 0, left: 0 };
+    const rect = ref.current.getBoundingClientRect();
+    return { top: rect.bottom, left: rect.left };
+  }, []);
 
   const selectedElements = store.getSelectedElements();
   const hasSelection = selectedElements.length > 0;
@@ -126,25 +139,25 @@ export function Toolbar() {
       >
         <Image size={16} />
       </button>
-      <div className="relative">
-        <button
-          className={`toolbar-btn ${store.activeTool === 'shape' ? 'active' : ''}`}
-          onClick={() => setShowShapePalette(!showShapePalette)}
-          title="Shape"
-        >
-          <Square size={16} />
-          <ChevronDown size={10} className="ml-0.5" />
-        </button>
-        {showShapePalette && (
-          <div className="absolute top-full left-0 z-50">
-            <ShapePalette onSelect={(shape) => {
-              store.setActiveShapeType(shape);
-              store.setActiveTool('shape');
-              setShowShapePalette(false);
-            }} onClose={() => setShowShapePalette(false)} />
-          </div>
-        )}
-      </div>
+      <button
+        ref={shapeBtnRef}
+        className={`toolbar-btn ${store.activeTool === 'shape' ? 'active' : ''}`}
+        onClick={() => setShowShapePalette(!showShapePalette)}
+        title="Shape"
+      >
+        <Square size={16} />
+        <ChevronDown size={10} className="ml-0.5" />
+      </button>
+      {showShapePalette && typeof document !== 'undefined' && ReactDOM.createPortal(
+        <div className="fixed z-[9999]" style={getDropdownPos(shapeBtnRef)}>
+          <ShapePalette onSelect={(shape) => {
+            store.setActiveShapeType(shape);
+            store.setActiveTool('shape');
+            setShowShapePalette(false);
+          }} onClose={() => setShowShapePalette(false)} />
+        </div>,
+        document.body
+      )}
       <button
         className={`toolbar-btn ${store.activeTool === 'line' ? 'active' : ''}`}
         onClick={() => store.setActiveTool('line')}
@@ -162,36 +175,34 @@ export function Toolbar() {
       <div className="toolbar-separator" />
 
       {/* Group 5: Fill & Stroke */}
-      <div className="relative">
-        <button className="toolbar-btn" onClick={() => setShowFillColor(!showFillColor)} title="Fill color">
-          <div className="w-4 h-4 border border-gray-300 rounded" style={{ backgroundColor: selectedStyle?.fill || '#ffffff' }} />
-          <ChevronDown size={10} className="ml-0.5" />
-        </button>
-        {showFillColor && (
-          <div className="absolute top-full left-0 z-50">
-            <ColorPicker
-              color={selectedStyle?.fill || '#ffffff'}
-              onChange={(color) => { updateSelectedStyle({ fill: color }); store.addRecentColor(color); }}
-              onClose={() => setShowFillColor(false)}
-            />
-          </div>
-        )}
-      </div>
-      <div className="relative">
-        <button className="toolbar-btn" onClick={() => setShowStrokeColor(!showStrokeColor)} title="Border color">
-          <div className="w-4 h-4 border-2 rounded" style={{ borderColor: selectedStyle?.stroke || '#000000' }} />
-          <ChevronDown size={10} className="ml-0.5" />
-        </button>
-        {showStrokeColor && (
-          <div className="absolute top-full left-0 z-50">
-            <ColorPicker
-              color={selectedStyle?.stroke || '#000000'}
-              onChange={(color) => { updateSelectedStyle({ stroke: color, strokeWidth: (selectedStyle?.strokeWidth || 0) < 1 ? 1 : selectedStyle?.strokeWidth }); store.addRecentColor(color); }}
-              onClose={() => setShowStrokeColor(false)}
-            />
-          </div>
-        )}
-      </div>
+      <button ref={fillBtnRef} className="toolbar-btn" onClick={() => setShowFillColor(!showFillColor)} title="Fill color">
+        <div className="w-4 h-4 border border-gray-300 rounded" style={{ backgroundColor: selectedStyle?.fill || '#ffffff' }} />
+        <ChevronDown size={10} className="ml-0.5" />
+      </button>
+      {showFillColor && typeof document !== 'undefined' && ReactDOM.createPortal(
+        <div className="fixed z-[9999]" style={getDropdownPos(fillBtnRef)}>
+          <ColorPicker
+            color={selectedStyle?.fill || '#ffffff'}
+            onChange={(color) => { updateSelectedStyle({ fill: color }); store.addRecentColor(color); }}
+            onClose={() => setShowFillColor(false)}
+          />
+        </div>,
+        document.body
+      )}
+      <button ref={strokeBtnRef} className="toolbar-btn" onClick={() => setShowStrokeColor(!showStrokeColor)} title="Border color">
+        <div className="w-4 h-4 border-2 rounded" style={{ borderColor: selectedStyle?.stroke || '#000000' }} />
+        <ChevronDown size={10} className="ml-0.5" />
+      </button>
+      {showStrokeColor && typeof document !== 'undefined' && ReactDOM.createPortal(
+        <div className="fixed z-[9999]" style={getDropdownPos(strokeBtnRef)}>
+          <ColorPicker
+            color={selectedStyle?.stroke || '#000000'}
+            onChange={(color) => { updateSelectedStyle({ stroke: color, strokeWidth: (selectedStyle?.strokeWidth || 0) < 1 ? 1 : selectedStyle?.strokeWidth }); store.addRecentColor(color); }}
+            onClose={() => setShowStrokeColor(false)}
+          />
+        </div>,
+        document.body
+      )}
       <div className="toolbar-separator" />
 
       {/* Group 6: Text formatting (shown when text selected) */}
@@ -248,21 +259,20 @@ export function Toolbar() {
           >
             <Strikethrough size={16} />
           </button>
-          <div className="relative">
-            <button className="toolbar-btn" onClick={() => setShowFontColor(!showFontColor)} title="Font color">
-              <span className="text-sm font-bold" style={{ color: selectedStyle?.color || '#000000' }}>A</span>
-              <div className="w-4 h-0.5 mt-0.5" style={{ backgroundColor: selectedStyle?.color || '#000000' }} />
-            </button>
-            {showFontColor && (
-              <div className="absolute top-full left-0 z-50">
-                <ColorPicker
-                  color={selectedStyle?.color || '#000000'}
-                  onChange={(color) => { updateSelectedStyle({ color }); store.addRecentColor(color); }}
-                  onClose={() => setShowFontColor(false)}
-                />
-              </div>
-            )}
-          </div>
+          <button ref={fontColorBtnRef} className="toolbar-btn" onClick={() => setShowFontColor(!showFontColor)} title="Font color">
+            <span className="text-sm font-bold" style={{ color: selectedStyle?.color || '#000000' }}>A</span>
+            <div className="w-4 h-0.5 mt-0.5" style={{ backgroundColor: selectedStyle?.color || '#000000' }} />
+          </button>
+          {showFontColor && typeof document !== 'undefined' && ReactDOM.createPortal(
+            <div className="fixed z-[9999]" style={getDropdownPos(fontColorBtnRef)}>
+              <ColorPicker
+                color={selectedStyle?.color || '#000000'}
+                onChange={(color) => { updateSelectedStyle({ color }); store.addRecentColor(color); }}
+                onClose={() => setShowFontColor(false)}
+              />
+            </div>,
+            document.body
+          )}
           <div className="toolbar-separator" />
           <button
             className={`toolbar-btn ${selectedStyle?.textAlign === 'left' ? 'active' : ''}`}
